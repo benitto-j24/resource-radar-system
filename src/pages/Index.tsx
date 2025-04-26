@@ -1,24 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowUp } from "lucide-react";
 import MessageBubble from '../components/MessageBubble';
-import { useLLMQuery } from '@/hooks/useLLMQuery'; // <- make sure path matches
+import { useLLMQuery } from '@/hooks/useLLMQuery';
 
 interface Message {
   text: string;
   timestamp: string;
   isBot: boolean;
+  isLoading?: boolean;
 }
-
-// Dummy utilizationData (replace with real data if available)
-const utilizationData = [];
 
 const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const { queryLLM, isLoading, error } = useLLMQuery(utilizationData);
+  const { queryLLM } = useLLMQuery();
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +29,6 @@ const Index = () => {
 
     const userTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Add user message
     const userMessage: Message = {
       text: inputValue,
       timestamp: userTimestamp,
@@ -34,33 +36,60 @@ const Index = () => {
     };
     setMessages(prev => [...prev, userMessage]);
 
+    const loadingBotMessage: Message = {
+      text: '',
+      timestamp: userTimestamp,
+      isBot: true,
+      isLoading: true,
+    };
+    setMessages(prev => [...prev, loadingBotMessage]);
+
     const query = inputValue;
     setInputValue('');
 
     try {
       const botReply = await queryLLM(query);
 
-      if (botReply) {
-        const botTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const botTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        const botMessage: Message = {
-          text: botReply, // The response from Ollama
-          timestamp: botTimestamp,
-          isBot: true,
-        };
-        setMessages(prev => [...prev, botMessage]);
+      if (botReply) {
+        // Replace last loading message with bot reply
+        setMessages(prev => [
+          ...prev.slice(0, -1),
+          {
+            text: botReply,
+            timestamp: botTimestamp,
+            isBot: true,
+            isLoading: false,
+          },
+        ]);
+      } else {
+        // If no reply, show a default error message
+        setMessages(prev => [
+          ...prev.slice(0, -1),
+          {
+            text: "**Error:** nextgenBOT couldn't generate a reply. Please try again later.",
+            timestamp: botTimestamp,
+            isBot: true,
+            isLoading: false,
+          },
+        ]);
+        
       }
     } catch (err) {
       console.error('Error querying LLM:', err);
-
       const errorTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // Show bot error message
-      setMessages(prev => [...prev, {
-        text: "⚠️ Sorry, nextgenBOT couldn't process the request.",
-        timestamp: errorTimestamp,
-        isBot: true,
-      }]);
+      // Replace the last loading with an error message
+      setMessages(prev => [
+        ...prev.slice(0, -1),
+        {
+          text: "⚠️ Sorry, nextgenBOT couldn't process your request. Please try again.",
+          timestamp: errorTimestamp,
+          isBot: true,
+          isLoading: false,
+        },
+      ]);
     }
   };
 
@@ -75,8 +104,10 @@ const Index = () => {
               message={message.text}
               timestamp={message.timestamp}
               isBot={message.isBot}
+              isLoading={message.isLoading}
             />
           ))}
+          <div ref={bottomRef} />
         </div>
 
         {/* Input Section */}
@@ -95,27 +126,12 @@ const Index = () => {
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Message nextgenBOT..."
                   className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
-                  disabled={isLoading}
                 />
               </div>
-              <Button type="submit" size="icon" className="rounded-lg bg-primary" disabled={isLoading}>
+              <Button type="submit" size="icon" className="rounded-lg bg-primary">
                 <ArrowUp className="h-4 w-4" />
               </Button>
             </form>
-
-            {/* Loading Indicator */}
-            {isLoading && (
-              <div className="text-xs text-center mt-2 text-muted-foreground">
-                nextgenBOT is thinking...
-              </div>
-            )}
-
-            {/* Error Display */}
-            {error && (
-              <div className="text-xs text-center mt-2 text-red-500">
-                {error}
-              </div>
-            )}
 
             <div className="text-xs text-center mt-4 text-muted-foreground">
               nextgenBOT can make mistakes. Check our Terms & Conditions.
