@@ -3,6 +3,8 @@ import React from 'react';
 import { Search } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { cn } from "@/lib/utils";
+import DashboardMetrics from './DashboardMetrics';
+import UtilizationChart from './UtilizationChart';
 
 interface TaskItem {
   title: string;
