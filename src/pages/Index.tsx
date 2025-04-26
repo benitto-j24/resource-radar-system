@@ -1,23 +1,22 @@
 
 import React from 'react';
-import Header from '../components/Header';
-import DashboardMetrics from '../components/DashboardMetrics';
-import UtilizationChart from '../components/UtilizationChart';
-import AnomalyAlerts from '../components/AnomalyAlerts';
+import Layout from '../components/Layout';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto py-6 space-y-6">
-        <h1 className="text-3xl font-bold">Resource Utilization Dashboard</h1>
-        <DashboardMetrics />
-        <div className="grid gap-4 grid-cols-4">
-          <UtilizationChart />
-          <AnomalyAlerts />
+    <Layout>
+      <div className="max-w-4xl mx-auto py-6 space-y-4 px-4">
+        <div className="flex items-start gap-4 p-4">
+          <div className="flex-1 space-y-4">
+            <div className="p-4 rounded-lg bg-accent">
+              <p className="text-sm">
+                Let's work together to analyze and optimize resource utilization across your organization.
+              </p>
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 };
 
