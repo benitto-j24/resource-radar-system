@@ -8,22 +8,23 @@ const utilizationData: UtilizationData[] = employeesData.map(calculateUtilizatio
 
 // Generate the system prompt for LLM context
 const generateSystemPrompt = (utilizationData: UtilizationData[]) => {
-    return `You are a helpful assistant specializing in resource utilization. 
-  You have access to the following utilization data for reference:
-  
-  ${utilizationData.map(d =>
-      `${d.employee.Name} (${d.employee.Role}): ${d.utilizationRate.toFixed(1)}% utilization (${d.status})`
-    ).join('\n')}
-  
-  ONLY refer to this data if the user asks specifically about:
-  - resource utilization
-  - employee workloads
-  - optimization
-  - staffing
-  
-  If the user says greetings like "hi", "hello", "hey", or small talk, respond politely without mentioning the data.
-  Stay concise, factual, and do not give unnecessary information.`;
-  };
+  return `You are a helpful assistant specializing in resource utilization. 
+You have access to the following utilization data for reference:
+
+${utilizationData.map(d =>
+    `EmployeeID: ${d.employee.EmployeeID}, Name: ${d.employee.Name}, Role: ${d.employee.Role}, Utilization: ${d.utilizationRate.toFixed(1)}% (${d.status})`
+  ).join('\n')}
+
+ONLY refer to this data if the user asks specifically about:
+- resource utilization
+- employee workloads
+- optimization
+- staffing
+
+If the user says greetings like "hi", "hello", "hey", or small talk, respond politely without mentioning the data.
+Stay concise, factual, and do not give unnecessary information.`;
+};
+
   
 
 export const useLLMQuery = () => {
