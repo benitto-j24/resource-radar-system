@@ -1,74 +1,48 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { Employee } from "@/types/employee";
 
-export const employeesData: Employee[] = [
-  {
-    EmployeeID: "E001",
-    Name: "John",
-    Role: "Developer",
-    AvailableHours: 40,
-    ProductiveHours: 35
-  },
-  {
-    EmployeeID: "E002",
-    Name: "Jane",
-    Role: "Designer",
-    AvailableHours: 40,
-    ProductiveHours: 20
-  },
-  {
-    EmployeeID: "E003",
-    Name: "Bob",
-    Role: "QA Engineer",
-    AvailableHours: 40,
-    ProductiveHours: 30
-  },
-  {
-    EmployeeID: "E004",
-    Name: "Alice",
-    Role: "Project Manager",
-    AvailableHours: 40,
-    ProductiveHours: 38
-  },
-  {
-    EmployeeID: "E005",
-    Name: "Mike",
-    Role: "DevOps Engineer",
-    AvailableHours: 40,
-    ProductiveHours: 25
-  },
-  {
-    EmployeeID: "E006",
-    Name: "Emma",
-    Role: "Business Analyst",
-    AvailableHours: 40,
-    ProductiveHours: 36
-  },
-  {
-    EmployeeID: "E007",
-    Name: "Tom",
-    Role: "Support Engineer",
-    AvailableHours: 40,
-    ProductiveHours: 42
-  },
-  {
-    EmployeeID: "E008",
-    Name: "Sarah",
-    Role: "UX Researcher",
-    AvailableHours: 40,
-    ProductiveHours: 32
-  },
-  {
-    EmployeeID: "E009",
-    Name: "Chris",
-    Role: "Software Architect",
-    AvailableHours: 40,
-    ProductiveHours: 45
-  },
-  {
-    EmployeeID: "E010",
-    Name: "Rachel",
-    Role: "Marketing Specialist",
-    AvailableHours: 40,
-    ProductiveHours: 28
-  }
-];
+// Exported shared array
+export const employeesData: Employee[] = [];
+
+export const useEmployeesData = (xlsxUrl: string) => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadEmployeesData = async () => {
+      try {
+        const response = await fetch(xlsxUrl);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch XLSX file');
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        const loadedEmployees: Employee[] = jsonData.map((row) => ({
+          EmployeeID: row.EmployeeID,
+          Name: row.Name,
+          Role: row.Role,
+          AvailableHours: Number(row.AvailableHours),
+          ProductiveHours: Number(row.ProductiveHours),
+        }));
+
+        employeesData.length = 0; // Clear previous
+        employeesData.push(...loadedEmployees); // Fill new
+        console.log('Employees Loaded:', employeesData);
+      } catch (error) {
+        console.error('Failed to load employees:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEmployeesData();
+  }, [xlsxUrl]);
+
+  return { loading, employees: employeesData };
+};

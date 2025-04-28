@@ -3,29 +3,28 @@ import { employeesData } from '@/data/employees';
 import { calculateUtilization } from '@/utils/utilizationUtils';
 import { UtilizationData } from '@/types/employee';
 
-// Calculate utilizationData once from employeesData
-const utilizationData: UtilizationData[] = employeesData.map(calculateUtilization);
-
 // Generate the system prompt for LLM context
 const generateSystemPrompt = (utilizationData: UtilizationData[]) => {
   return `You are a helpful assistant specializing in resource utilization. 
-You have access to the following utilization data for reference:
+You have access to the following employee data for reference:
 
 ${utilizationData.map(d =>
-    `EmployeeID: ${d.employee.EmployeeID}, Name: ${d.employee.Name}, Role: ${d.employee.Role}, Utilization: ${d.utilizationRate.toFixed(1)}% (${d.status})`
+    `EmployeeID: ${d.employee.EmployeeID}, Name: ${d.employee.Name}, Role: ${d.employee.Role}, AvailableHours: ${d.employee.AvailableHours}, ProductiveHours: ${d.employee.ProductiveHours}, Utilization: ${d.utilizationRate.toFixed(1)}% (${d.status})`
   ).join('\n')}
 
-ONLY refer to this data if the user asks specifically about:
+ONLY use this data if the user asks about:
 - resource utilization
 - employee workloads
+- available hours
+- productive hours
 - optimization
 - staffing
 
-If the user says greetings like "hi", "hello", "hey", or small talk, respond politely without mentioning the data.
-Stay concise, factual, and do not give unnecessary information.`;
+If the user greets ("hi", "hello", etc.), reply politely without using the data.
+Keep your replies concise and factual.
+`;
 };
 
-  
 
 export const useLLMQuery = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +35,10 @@ export const useLLMQuery = () => {
     setError(null);
 
     try {
-      return await queryOllama(query);
+      //  Recalculate utilizationData fresh every query
+      const utilizationData: UtilizationData[] = employeesData.map(calculateUtilization);
+
+      return await queryOllama(query, utilizationData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       return null;
@@ -45,7 +47,7 @@ export const useLLMQuery = () => {
     }
   };
 
-  const queryOllama = async (query: string) => {
+  const queryOllama = async (query: string, utilizationData: UtilizationData[]) => {
     const response = await fetch('http://localhost:11434/api/chat', {
       method: 'POST',
       headers: {
