@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Import } from "lucide-react";
 import MessageBubble from '../components/MessageBubble';
 import { useLLMQuery } from '@/hooks/useLLMQuery';
 import { useEmployeesData } from '@/data/employees'; // ✅ Import this
@@ -18,7 +18,7 @@ const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const { queryLLM } = useLLMQuery();
-  const { loading: employeesLoading } = useEmployeesData('https://nextgenbots.s3.us-east-1.amazonaws.com/employee_data.xlsx'); // ✅ Load XLSX at start
+  const { loading: employeesLoading, refetch: refetchEmployees } = useEmployeesData(import.meta.env.VITE_SHEET_ID);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,10 +54,11 @@ const Index = () => {
     setInputValue('');
 
     try {
+      await refetchEmployees(); // Fetch updated employee data before replying
       const botReply = await queryLLM(query);
-
+    
       const botTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+    
       if (botReply) {
         setMessages(prev => [
           ...prev.slice(0, -1),
@@ -79,10 +80,13 @@ const Index = () => {
           },
         ]);
       }
+    
+    
+    
     } catch (err) {
       console.error('Error querying LLM:', err);
       const errorTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+    
       setMessages(prev => [
         ...prev.slice(0, -1),
         {
@@ -93,6 +97,7 @@ const Index = () => {
         },
       ]);
     }
+    
   };
 
   return (
