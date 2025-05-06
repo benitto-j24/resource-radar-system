@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUp, Import } from "lucide-react";
 import MessageBubble from '../components/MessageBubble';
 import { useLLMQuery } from '@/hooks/useLLMQuery';
-import { useEmployeesData } from '@/data/employees'; // ✅ Import this
+import { useEmployeesData } from '@/data/employees'; 
 
 interface Message {
   text: string;
@@ -104,21 +104,32 @@ const Index = () => {
     <Layout>
       <div className="flex flex-col h-full">
         {/* Messages */}
-        <div className="flex-1 py-6 space-y-4 px-4 overflow-y-auto">
-          {employeesLoading && (
-            <div className="text-center text-muted-foreground">Loading employee data...</div>
-          )}
-          {messages.map((message, index) => (
-            <MessageBubble
-              key={index}
-              message={message.text}
-              timestamp={message.timestamp}
-              isBot={message.isBot}
-              isLoading={message.isLoading}
-            />
-          ))}
-          <div ref={bottomRef} />
-        </div>
+        <div className="flex-1 py-6 space-y-4 px-4 overflow-y-auto bg-cover bg-center bg-no-repeat relative">
+  {/* Centered message when there are no messages */}
+  {messages.length === 0 && !employeesLoading && (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <p className="text-xl font-semibold text-muted-foreground">Start a conversation with nextgenBOT...</p>
+    </div>
+  )}
+
+  {/* Loading message */}
+  {employeesLoading && (
+    <div className="text-center text-muted-foreground">Loading employee data...</div>
+  )}
+
+  {/* Messages */}
+  {messages.map((message, index) => (
+    <MessageBubble
+      key={index}
+      message={message.text}
+      timestamp={message.timestamp}
+      isBot={message.isBot}
+      isLoading={message.isLoading}
+    />
+  ))}
+
+  <div ref={bottomRef} />
+</div>
 
         {/* Input Section */}
         <div className="border-t mt-auto">
